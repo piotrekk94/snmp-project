@@ -15,6 +15,11 @@ public:
     Object(std::string name);
     Object(std::string name, std::string syntax, std::string access, std::string status, std::string desc);
     std::string getName();
+    bool isLeaf();
+    std::string getSyntax();
+    std::string getAccess();
+    std::string getStatus();
+    std::string getDesc();
 };
 
 struct ObjectPath {

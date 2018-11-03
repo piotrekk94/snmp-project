@@ -40,16 +40,34 @@ namespace data {
 		struct path path;
 	};
 
-	struct object
+	struct obj
 	{
 		std::string name;
 		std::string syntax;
 		std::string access;
 		std::string status;
 		std::string desc;
-		std::vector<std::string> path;
+		struct path path;
+	};
+
+	struct type
+	{
+		std::string name;
+		std::string visibility;
+		int typeId;
+		std::string typeName;
+		std::string constraints;
 	};
 }
+
+BOOST_FUSION_ADAPT_STRUCT(
+	data::type,
+	(std::string, name),
+	(std::string, visibility),
+	(int, typeId),
+	(std::string, typeName),
+	(std::string, constraints)
+)
 
 BOOST_FUSION_ADAPT_STRUCT(
 	data::import,
@@ -71,13 +89,13 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-	data::object,
+	data::obj,
 	(std::string, name),
 	(std::string, syntax),
 	(std::string, access),
 	(std::string, status),
 	(std::string, desc),
-	(std::vector<std::string>, path)
+	(data::path, path)
 )
 
 void add_oid(data::oid const& oid){
@@ -90,6 +108,18 @@ void add_oid(data::oid const& oid){
 	path.path.push_back(std::make_tuple("", oid.path.destId));
 	tree->addObject(object, path);
 }
+
+void add_obj(data::obj const& obj){
+	Object *object = new Object(obj.name, obj.syntax, obj.access, obj.status, obj.desc);
+	ObjectPath path;
+	path.path.push_back(std::make_tuple(obj.path.startNode, -1));
+	for(auto const& val : obj.path.path){
+		path.path.push_back(std::make_tuple(fusion::at_c<0>(val), fusion::at_c<1>(val)));
+	}
+	path.path.push_back(std::make_tuple("", obj.path.destId));
+	tree->addObject(object, path);
+}
+
 
 template <typename Iterator>
 struct mib_parser : qi::grammar<Iterator, void(), ascii::space_type>
@@ -109,10 +139,12 @@ struct mib_parser : qi::grammar<Iterator, void(), ascii::space_type>
 		oid %= name >> qi::lit("OBJECT IDENTIFIER") >> path;
 		oids = +oid[&add_oid];
 
-		//obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> name >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
-		//objs %= +obj;
+		obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> qi::lexeme[+(qi::char_ - qi::char_("\n"))] >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
+		objs = +obj[&add_obj];
 
-		start = imports >> oids; //>> objs;
+		//type %= name >> qi::lit("::=") >> -('[' >> name >> qi::int_ >> ']') >> -(qi::lit("EXPLICIT") | qi::lit("IMPLICIT")) >> name;// >> -('(' >> qi::lexeme[+(qi::char_ - ')')] >> ')');
+
+		start = imports >> oids >> objs;
 	}
 
 	qi::rule<Iterator, std::string(), ascii::space_type> name;
@@ -125,6 +157,11 @@ struct mib_parser : qi::grammar<Iterator, void(), ascii::space_type>
 
 	qi::rule<Iterator, data::oid(), ascii::space_type> oid;
 	qi::rule<Iterator, void(), ascii::space_type> oids;
+
+	qi::rule<Iterator, data::obj(), ascii::space_type> obj;
+	qi::rule<Iterator, void(), ascii::space_type> objs;
+
+	qi::rule<Iterator, data::type(), ascii::space_type> type;
 
 	qi::rule<Iterator, void(), ascii::space_type> start;
 };

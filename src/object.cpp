@@ -17,3 +17,20 @@ Object::Object(std::string name, std::string syntax, std::string access, std::st
 std::string Object::getName(){
     return this->name;
 }
+
+bool Object::isLeaf(){
+    return this->leaf;
+}
+
+std::string Object::getSyntax(){
+    return this->syntax;
+}
+std::string Object::getAccess(){
+    return this->access;
+}
+std::string Object::getStatus(){
+    return this->status;
+}
+std::string Object::getDesc(){
+    return this->desc;
+}

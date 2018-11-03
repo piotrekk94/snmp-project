@@ -6,6 +6,8 @@ class TreeNode {
 private:
     Object *object;
     std::vector<TreeNode*> children;
+    static void printNull(std::vector<std::string> &res, int level);
+    void printLeaf(std::vector<std::string> &res, int level);
 public:
     TreeNode(Object *object);
     TreeNode* getNode(int n);

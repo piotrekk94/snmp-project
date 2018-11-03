@@ -44,9 +44,34 @@ void TreeNode::printStructure(std::vector<std::string> &res, int level){
     node.append(this->getValue()->getName());
     res.push_back(node);
 
+    if(this->getValue()->isLeaf())
+        printLeaf(res, level + 1);
+
     for(auto& n : this->children)
         if(n != nullptr)
             n->printStructure(res, level + 1);
+        else
+            printNull(res, level + 1);
+}
+
+void TreeNode::printLeaf(std::vector<std::string> &res, int level){
+    std::string node;
+    for(int i = 0; i < level; i++)
+        node.append("\t");
+
+    res.push_back(node + "SYNTAX: " + this->getValue()->getSyntax());
+    res.push_back(node + "ACCESS: " + this->getValue()->getAccess());
+    res.push_back(node + "STATUS: " + this->getValue()->getStatus());
+    res.push_back(node + "DESC: " + this->getValue()->getDesc());
+}
+
+void TreeNode::printNull(std::vector<std::string> &res, int level){
+    std::string node;
+    for(int i = 0; i < level; i++)
+        node.append("\t");
+
+    node.append("---");
+    res.push_back(node);
 }
 
 ObjectTree::ObjectTree(Object *object){
