@@ -1,5 +1,5 @@
 CXX:=g++
-CFLAGS:=-O3 -Wall -Wextra -Iinclude
+CFLAGS:=-O3 -Wall -Wextra -Iinclude -g
 
 SRC:=$(wildcard src/*.cpp)
 OBJ:=$(SRC:.cpp=.o)
