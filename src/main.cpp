@@ -9,15 +9,14 @@ ObjectTree *tree;
 
 int main(int argc, char* argv[]){
 	parser p;
-	std::vector<std::string> imports;
 
 	Object iso("iso");
 	tree = new ObjectTree(&iso);
 
 	if(argc > 1)
-		p.load(argv[1], imports);
+		p.load(argv[1]);
 	else
-		p.load("test.txt", imports);
+		p.load("test.txt");
 
 	std::cout<<"Tree structure:"<<std::endl<<*tree;
 
