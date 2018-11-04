@@ -54,6 +54,7 @@ namespace data {
 	{
 		std::string name;
 		std::string visibility;
+		std::string mode;
 		std::string typeName;
 		std::string constraints;
 	};
@@ -63,6 +64,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 	data::type,
 	(std::string, name),
 	(std::string, visibility),
+	(std::string, mode),
 	(std::string, typeName),
 	(std::string, constraints)
 )
@@ -129,6 +131,26 @@ void add_type(data::type const& type){
 	types.push_back(t);
 }
 
+template <typename Iterator>
+struct skip_grammar : qi::grammar<Iterator, void()>
+{
+	skip_grammar() : skip_grammar::base_type(skip, "SKIP")
+	{
+	name = +(qi::alnum | qi::char_("-"));
+	comment = qi::lit("--") >> *(qi::char_ - qi::eol) >> qi::eol;
+	exports = qi::lit("EXPORTS") >> +(qi::char_ - ';') >> ';';
+	definitions = name >> qi::lit(" DEFINITIONS ::= BEGIN");
+
+	skip = comment | exports | definitions | ascii::space;
+	}
+
+	qi::rule<std::string::const_iterator, void()> comment;
+	qi::rule<std::string::const_iterator, void()> exports;
+	qi::rule<std::string::const_iterator, void()> definitions;
+	qi::rule<std::string::const_iterator, void()> name;
+	qi::rule<std::string::const_iterator, void()> skip;
+};
+
 template <typename Iterator, typename SkipType>
 struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 {
@@ -153,10 +175,26 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 		obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> syntax >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
 		objs = +obj[&add_obj];
 
-		type %= name >> qi::lit("::=") >> -('[' >> qi::lexeme[+(qi::char_ - ']')] >> ']') >> -(qi::lit("EXPLICIT") | qi::lit("IMPLICIT")) >> qi::lexeme[+(qi::char_ - '(' - qi::eol)] >> -('(' >> qi::lexeme[+(qi::char_ - ')')] >> ')');
+		visibility %= '[' >> qi::lexeme[+(qi::char_ - ']')] >> ']';
+
+		mode %= qi::string("EXPLICIT") | qi::string("IMPLICIT");
+
+		//constr %= '(' >> qi::lexeme[+(qi::char_ - ')')] >> ')';
+
+		range %= '(' >> qi::lexeme[+(ascii::digit)] >> qi::string("..") >> qi::lexeme[+(ascii::digit)] >> ')';
+
+		size %= '(' >> qi::lit("SIZE") >> '(' >> qi::lexeme[+(ascii::digit)] >> ')' >> ')';
+
+		type_name %= qi::string("INTEGER") | qi::string("OCTET STRING") | qi::string("OBJECT IDENTIFIER") | qi::string("NULL") | (qi::string("SEQUENCE OF") >> type_name) | name;
+
+		type_syntax %= type_name >> -(qi::string("{") >> qi::lexeme[+(qi::char_ - '}')]>> qi::string("}"));
+
+		type %= name >> qi::lit("::=") >> -visibility >> -mode >> type_syntax >> -(range | size);
 		types = +type[&add_type];
 
-		start = imports >> oids >> objs >> types;
+		macro = name >> qi::lit("MACRO") >> qi::lit("::=") >> qi::lit("BEGIN") >> *(syntax_part >> !&qi::lit("END")) >> syntax_part >> qi::lit("END");
+
+		start = -imports >> *(oids | objs | types | macro);
 	}
 
 	qi::rule<Iterator, std::string(), SkipType> name;
@@ -165,6 +203,13 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 	qi::rule<Iterator, std::string(), SkipType> desc;
 	qi::rule<Iterator, std::string(), SkipType> syntax_part;
 	qi::rule<Iterator, std::vector<std::string>(), SkipType> syntax;
+
+	qi::rule<Iterator, std::string(), SkipType> visibility;
+	qi::rule<Iterator, std::string(), SkipType> mode;
+	qi::rule<Iterator, std::string(), SkipType> type_syntax;
+	qi::rule<Iterator, std::string(), SkipType> type_name;
+	qi::rule<Iterator, std::string(), SkipType> range;
+	qi::rule<Iterator, std::string(), SkipType> size;
 
 	qi::rule<Iterator, void(), SkipType> import;
 	qi::rule<Iterator, void(), SkipType> imports;
@@ -178,6 +223,8 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 	qi::rule<Iterator, data::type(), SkipType> type;
 	qi::rule<Iterator, void(), SkipType> types;
 
+	qi::rule<Iterator, void(), SkipType> macro;
+
 	qi::rule<Iterator, void(), SkipType> start;
 };
 
@@ -188,11 +235,9 @@ bool parser::load(std::string filename){
 	std::string::const_iterator iter = str.begin();
     std::string::const_iterator end = str.end();
 
-	qi::rule<std::string::const_iterator, void()> comment;
-	comment = (qi::lit("--") >> *(qi::char_ - qi::eol) >> qi::eol) | ascii::space;
-
-	mib_parser<std::string::const_iterator, BOOST_TYPEOF(comment)> g;
-	bool r = qi::phrase_parse(iter, end, g, comment);
+	skip_grammar<std::string::const_iterator> skip;
+	mib_parser<std::string::const_iterator, BOOST_TYPEOF(skip)> g;
+	bool r = qi::phrase_parse(iter, end, g, skip);
 
 	return r;
 }
