@@ -1,4 +1,5 @@
 #include <object.hpp>
+#include <iostream>
 
 Object::Object(std::string name){
     this->name = name;
@@ -33,4 +34,53 @@ std::string Object::getStatus(){
 }
 std::string Object::getDesc(){
     return this->desc;
+}
+
+std::vector<Type> types;
+
+Type::Type(std::string name, std::string visibility, std::string typeName, std::string constraints){
+    this->name = name;
+    this->visibility = visibility;
+    this->typeName = typeName;
+    this->constraints = constraints;
+    if(constraints.length() > 0)
+        this->constr = true;
+    else
+        this->constr = false;
+    
+    if(visibility.length() > 0)
+        this->vis = true;
+    else
+        this->vis = false;
+}
+
+std::string Type::getName(){
+    return this->name;
+}
+std::string Type::getVisibility(){
+    return this->visibility;
+}
+std::string Type::getTypeName(){
+    return this->typeName;
+}
+std::string Type::getConstraints(){
+    return this->constraints;
+}
+
+bool Type::hasConstraints(){
+    return this->constr;
+}
+
+bool Type::hasVisibility(){
+    return this->vis;
+}
+
+std::ostream &operator<<(std::ostream &os, Type &type){
+    os<<type.getName()<<std::endl;
+    if(type.hasVisibility())
+        os<<type.getVisibility()<<std::endl;
+    os<<type.getTypeName()<<std::endl;
+    if(type.hasConstraints())
+        os<<type.getConstraints()<<std::endl;
+    return os;
 }

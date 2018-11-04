@@ -54,7 +54,6 @@ namespace data {
 	{
 		std::string name;
 		std::string visibility;
-		int typeId;
 		std::string typeName;
 		std::string constraints;
 	};
@@ -64,7 +63,6 @@ BOOST_FUSION_ADAPT_STRUCT(
 	data::type,
 	(std::string, name),
 	(std::string, visibility),
-	(int, typeId),
 	(std::string, typeName),
 	(std::string, constraints)
 )
@@ -120,9 +118,13 @@ void add_obj(data::obj const& obj){
 	tree->addObject(object, path);
 }
 
+void add_type(data::type const& type){
+	Type t(type.name, type.visibility, type.typeName, type.constraints);
+	types.push_back(t);
+}
 
-template <typename Iterator>
-struct mib_parser : qi::grammar<Iterator, void(), ascii::space_type>
+template <typename Iterator, typename SkipType>
+struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 {
 	mib_parser() : mib_parser::base_type(start)
 	{
@@ -139,31 +141,33 @@ struct mib_parser : qi::grammar<Iterator, void(), ascii::space_type>
 		oid %= name >> qi::lit("OBJECT IDENTIFIER") >> path;
 		oids = +oid[&add_oid];
 
-		obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> qi::lexeme[+(qi::char_ - qi::char_("\n"))] >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
+		obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> qi::lexeme[+(qi::char_ - qi::eol)] >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
 		objs = +obj[&add_obj];
 
-		//type %= name >> qi::lit("::=") >> -('[' >> name >> qi::int_ >> ']') >> -(qi::lit("EXPLICIT") | qi::lit("IMPLICIT")) >> name;// >> -('(' >> qi::lexeme[+(qi::char_ - ')')] >> ')');
+		type %= name >> qi::lit("::=") >> -('[' >> qi::lexeme[+(qi::char_ - ']')] >> ']') >> -(qi::lit("EXPLICIT") | qi::lit("IMPLICIT")) >> qi::lexeme[+(qi::char_ - '(' - qi::eol)] >> -('(' >> qi::lexeme[+(qi::char_ - ')')] >> ')');
+		types = +type[&add_type];
 
-		start = imports >> oids >> objs;
+		start = imports >> oids >> objs >> types;
 	}
 
-	qi::rule<Iterator, std::string(), ascii::space_type> name;
-	qi::rule<Iterator, std::vector<std::string>(), ascii::space_type> names;
-	qi::rule<Iterator, data::path(), ascii::space_type> path;
-	qi::rule<Iterator, std::string(), ascii::space_type> desc;
+	qi::rule<Iterator, std::string(), SkipType> name;
+	qi::rule<Iterator, std::vector<std::string>(), SkipType> names;
+	qi::rule<Iterator, data::path(), SkipType> path;
+	qi::rule<Iterator, std::string(), SkipType> desc;
 
-	qi::rule<Iterator, void(), ascii::space_type> import;
-	qi::rule<Iterator, void(), ascii::space_type> imports;
+	qi::rule<Iterator, void(), SkipType> import;
+	qi::rule<Iterator, void(), SkipType> imports;
 
-	qi::rule<Iterator, data::oid(), ascii::space_type> oid;
-	qi::rule<Iterator, void(), ascii::space_type> oids;
+	qi::rule<Iterator, data::oid(), SkipType> oid;
+	qi::rule<Iterator, void(), SkipType> oids;
 
-	qi::rule<Iterator, data::obj(), ascii::space_type> obj;
-	qi::rule<Iterator, void(), ascii::space_type> objs;
+	qi::rule<Iterator, data::obj(), SkipType> obj;
+	qi::rule<Iterator, void(), SkipType> objs;
 
-	qi::rule<Iterator, data::type(), ascii::space_type> type;
+	qi::rule<Iterator, data::type(), SkipType> type;
+	qi::rule<Iterator, void(), SkipType> types;
 
-	qi::rule<Iterator, void(), ascii::space_type> start;
+	qi::rule<Iterator, void(), SkipType> start;
 };
 
 bool parser::load(std::string filename){
@@ -173,12 +177,16 @@ bool parser::load(std::string filename){
 	std::string::const_iterator iter = str.begin();
     std::string::const_iterator end = str.end();
 
-	mib_parser<std::string::const_iterator> g;
-	bool r = qi::phrase_parse(iter, end, g, ascii::space);
+	qi::rule<std::string::const_iterator, void()> comment;
+	comment = (qi::lit("--") >> *(qi::char_ - qi::eol) >> qi::eol) | ascii::space;
+
+	mib_parser<std::string::const_iterator, BOOST_TYPEOF(comment)> g;
+	bool r = qi::phrase_parse(iter, end, g, comment);
 
 	return r;
 }
 
+/*
 bool parser::load(std::string filename, std::vector<std::string> imports) {
 	std::ifstream ifs(filename);
 	std::string str((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -186,8 +194,12 @@ bool parser::load(std::string filename, std::vector<std::string> imports) {
 	std::string::const_iterator iter = str.begin();
     std::string::const_iterator end = str.end();
 
-	mib_parser<std::string::const_iterator> g;
-	bool r = qi::phrase_parse(iter, end, g, ascii::space);
+	qi::rule<std::string::const_iterator, void()> comment;
+	comment = (qi::lit("--") >> *(qi::char_ - qi::eol) >> qi::eol) | ascii::space;
+
+	mib_parser<std::string::const_iterator, BOOST_TYPEOF(comment)> g;
+	bool r = qi::phrase_parse(iter, end, g, comment);
 
 	return r;
 }
+*/

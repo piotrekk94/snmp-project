@@ -74,6 +74,8 @@ void TreeNode::printNull(std::vector<std::string> &res, int level){
     res.push_back(node);
 }
 
+ObjectTree *tree;
+
 ObjectTree::ObjectTree(Object *object){
     this->root = new TreeNode(object);
 }

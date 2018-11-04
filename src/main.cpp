@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-ObjectTree *tree;
-
 int main(int argc, char* argv[]){
 	parser p;
 
@@ -19,6 +17,11 @@ int main(int argc, char* argv[]){
 		p.load("test.txt");
 
 	std::cout<<"Tree structure:"<<std::endl<<*tree;
+
+	std::cout<<"Types:"<<std::endl;
+
+	for(auto &val : types)
+		std::cout<<val<<std::endl;
 
 	return 0;
 }
