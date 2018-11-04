@@ -43,7 +43,7 @@ namespace data {
 	struct obj
 	{
 		std::string name;
-		std::string syntax;
+		std::vector<std::string> syntax;
 		std::string access;
 		std::string status;
 		std::string desc;
@@ -89,7 +89,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 BOOST_FUSION_ADAPT_STRUCT(
 	data::obj,
 	(std::string, name),
-	(std::string, syntax),
+	(std::vector<std::string>, syntax),
 	(std::string, access),
 	(std::string, status),
 	(std::string, desc),
@@ -108,7 +108,13 @@ void add_oid(data::oid const& oid){
 }
 
 void add_obj(data::obj const& obj){
-	Object *object = new Object(obj.name, obj.syntax, obj.access, obj.status, obj.desc);
+	std::string syntax;
+	for(auto const& val : obj.syntax){
+		syntax.append(val);
+		syntax.append(" ");
+	}
+
+	Object *object = new Object(obj.name, syntax, obj.access, obj.status, obj.desc);
 	ObjectPath path;
 	path.path.push_back(std::make_tuple(obj.path.startNode, -1));
 	for(auto const& val : obj.path.path){
@@ -131,6 +137,9 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 		name %= qi::lexeme[+(ascii::alnum | qi::char_("-"))];
 		names %= name % ',';
 
+		syntax_part %= qi::lexeme[+(qi::char_ - ascii::space)];
+		syntax %= *(syntax_part >> !&qi::lit("ACCESS")) >> syntax_part;
+
 		import = names >> qi::lit("FROM") >> name;
 		imports = qi::lit("IMPORTS") >> +import >> ';';
 
@@ -141,7 +150,7 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 		oid %= name >> qi::lit("OBJECT IDENTIFIER") >> path;
 		oids = +oid[&add_oid];
 
-		obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> qi::lexeme[+(qi::char_ - qi::eol)] >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
+		obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> syntax >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
 		objs = +obj[&add_obj];
 
 		type %= name >> qi::lit("::=") >> -('[' >> qi::lexeme[+(qi::char_ - ']')] >> ']') >> -(qi::lit("EXPLICIT") | qi::lit("IMPLICIT")) >> qi::lexeme[+(qi::char_ - '(' - qi::eol)] >> -('(' >> qi::lexeme[+(qi::char_ - ')')] >> ')');
@@ -154,6 +163,8 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 	qi::rule<Iterator, std::vector<std::string>(), SkipType> names;
 	qi::rule<Iterator, data::path(), SkipType> path;
 	qi::rule<Iterator, std::string(), SkipType> desc;
+	qi::rule<Iterator, std::string(), SkipType> syntax_part;
+	qi::rule<Iterator, std::vector<std::string>(), SkipType> syntax;
 
 	qi::rule<Iterator, void(), SkipType> import;
 	qi::rule<Iterator, void(), SkipType> imports;
