@@ -18,6 +18,8 @@ namespace qi = boost::spirit::qi;
 namespace fusion = boost::fusion;
 namespace ascii = boost::spirit::ascii;
 
+parser p;
+
 namespace data {
 	typedef std::vector<fusion::vector<std::string, int>> path_t;
 
@@ -98,6 +100,19 @@ BOOST_FUSION_ADAPT_STRUCT(
 	(data::path, path)
 )
 
+void import_file(data::import const& import){
+	std::vector<std::string> imports;
+	for(auto const& val : import.names){
+		if(val.compare("OBJECT-TYPE") != 0)
+			imports.push_back(val);
+	}
+
+	if(imports.size() > 0){
+		std::cout<<"Importing file: "<<import.from<<std::endl;
+		p.load(import.from);
+	}
+}
+
 void add_oid(data::oid const& oid){
 	Object *object = new Object(oid.name);
 	ObjectPath path;
@@ -163,7 +178,7 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 		syntax %= *(syntax_part >> !&qi::lit("ACCESS")) >> syntax_part;
 
 		import = names >> qi::lit("FROM") >> name;
-		imports = qi::lit("IMPORTS") >> +import >> ';';
+		imports = qi::lit("IMPORTS") >> +import[&import_file] >> ';';
 
 		path %= qi::lit("::=") >> '{' >> name >> *(name >> '(' >> qi::int_ >> ')') >> qi::int_ >> '}';
 
@@ -194,7 +209,9 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 
 		macro = name >> qi::lit("MACRO") >> qi::lit("::=") >> qi::lit("BEGIN") >> *(syntax_part >> !&qi::lit("END")) >> syntax_part >> qi::lit("END");
 
-		start = -imports >> *(oids | objs | types | macro);
+		hack = qi::lexeme[qi::char_ - qi::eol];
+
+		start = -imports >> *(oids | objs | types | macro | hack);
 	}
 
 	qi::rule<Iterator, std::string(), SkipType> name;
@@ -211,7 +228,7 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 	qi::rule<Iterator, std::string(), SkipType> range;
 	qi::rule<Iterator, std::string(), SkipType> size;
 
-	qi::rule<Iterator, void(), SkipType> import;
+	qi::rule<Iterator, data::import(), SkipType> import;
 	qi::rule<Iterator, void(), SkipType> imports;
 
 	qi::rule<Iterator, data::oid(), SkipType> oid;
@@ -224,6 +241,8 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 	qi::rule<Iterator, void(), SkipType> types;
 
 	qi::rule<Iterator, void(), SkipType> macro;
+
+	qi::rule<Iterator, void(), SkipType> hack;
 
 	qi::rule<Iterator, void(), SkipType> start;
 };

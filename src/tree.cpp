@@ -44,8 +44,8 @@ void TreeNode::printStructure(std::vector<std::string> &res, int level){
     node.append(this->getValue()->getName());
     res.push_back(node);
 
-    if(this->getValue()->isLeaf())
-        printLeaf(res, level + 1);
+    //if(this->getValue()->isLeaf())
+    //    printLeaf(res, level + 1);
 
     for(auto& n : this->children)
         if(n != nullptr)
@@ -97,10 +97,12 @@ TreeNode *ObjectTree::getNode(std::string name){
             }
         queue.pop();
     }
+
+    return nullptr;
 }
 
 Object *ObjectTree::getObject(std::string name){
-    this->getNode(name)->getValue();
+    return this->getNode(name)->getValue();
 }
 
 std::vector<std::string> ObjectTree::printTree(){
@@ -111,6 +113,10 @@ std::vector<std::string> ObjectTree::printTree(){
 
 void ObjectTree::addObject(Object *object, ObjectPath& path){
     auto node = this->getNode(std::get<0>(path.path[0]));
+    if(node == nullptr){
+        std::cout<<"Could not find node: "<<std::get<0>(path.path[0])<<std::endl;
+        return;
+    }
     if(path.path.size() > 2){
         for(int i = 1; i < path.path.size() - 1; i++){
             auto nextNode = node->getNode(std::get<1>(path.path[i]) - 1);

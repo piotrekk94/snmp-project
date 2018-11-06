@@ -7,3 +7,5 @@ public:
 	bool load(std::string filename);
 	bool load(std::string filename, std::vector<std::string> imports);
 };
+
+extern parser p;
