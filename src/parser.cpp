@@ -3,9 +3,7 @@
 #include <tree.hpp>
 
 #include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/phoenix_core.hpp>
-#include <boost/spirit/include/phoenix_operator.hpp>
-#include <boost/spirit/include/phoenix_object.hpp>
+
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/fusion/include/io.hpp>
 #include <boost/lambda/lambda.hpp>
@@ -52,15 +50,30 @@ namespace data {
 		struct path path;
 	};
 
+	struct seq_member
+	{
+		std::string name;
+		std::string type;
+		std::string cons;
+	};
+
 	struct type
 	{
 		std::string name;
 		std::string visibility;
 		std::string mode;
 		std::string typeName;
+		std::vector<data::seq_member> sequence;
 		std::string constraints;
 	};
 }
+
+BOOST_FUSION_ADAPT_STRUCT(
+	data::seq_member,
+	(std::string, name),
+	(std::string, type),
+	(std::string, cons)
+)
 
 BOOST_FUSION_ADAPT_STRUCT(
 	data::type,
@@ -68,6 +81,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 	(std::string, visibility),
 	(std::string, mode),
 	(std::string, typeName),
+	(std::vector<data::seq_member>, sequence),
 	(std::string, constraints)
 )
 
@@ -142,7 +156,15 @@ void add_obj(data::obj const& obj){
 }
 
 void add_type(data::type const& type){
-	Type t(type.name, type.visibility, type.typeName, type.constraints);
+	std::vector<seq_type> seq_types;
+	for(auto const& val : type.sequence){
+		seq_type seq;
+		seq.name = val.name;
+		seq.cons = val.cons;
+		seq.type = val.type;
+		seq_types.push_back(seq);
+	}
+	Type t(type.name, type.visibility, type.typeName, type.constraints, seq_types);
 	types.push_back(t);
 }
 
@@ -202,9 +224,11 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 
 		type_name %= qi::string("INTEGER") | qi::string("OCTET STRING") | qi::string("OBJECT IDENTIFIER") | qi::string("NULL") | (qi::string("SEQUENCE OF") >> type_name) | name;
 
-		type_syntax %= type_name >> -(qi::string("{") >> qi::lexeme[+(qi::char_ - '}')]>> qi::string("}"));
+		//type_syntax %= type_name >> -(qi::string("{") >> qi::lexeme[+(qi::char_ - '}')]>> qi::string("}"));
 
-		type %= name >> qi::lit("::=") >> -visibility >> -mode >> type_syntax >> -(range | size);
+		seq_member %= name >> type_name >> -(range|size);
+
+		type %= name >> qi::lit("::=") >> -visibility >> -mode >> type_name >> -('{' >> seq_member % ',' >> '}') >> -(range | size);
 		types = +type[&add_type];
 
 		macro = name >> qi::lit("MACRO") >> qi::lit("::=") >> qi::lit("BEGIN") >> *(syntax_part >> !&qi::lit("END")) >> syntax_part >> qi::lit("END");
@@ -223,6 +247,7 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 
 	qi::rule<Iterator, std::string(), SkipType> visibility;
 	qi::rule<Iterator, std::string(), SkipType> mode;
+	qi::rule<Iterator, data::seq_member(), SkipType> seq_member;
 	qi::rule<Iterator, std::string(), SkipType> type_syntax;
 	qi::rule<Iterator, std::string(), SkipType> type_name;
 	qi::rule<Iterator, std::string(), SkipType> range;

@@ -38,11 +38,12 @@ std::string Object::getDesc(){
 
 std::vector<Type> types;
 
-Type::Type(std::string name, std::string visibility, std::string typeName, std::string constraints){
+Type::Type(std::string name, std::string visibility, std::string typeName, std::string constraints, std::vector<seq_type> &sequence){
     this->name = name;
     this->visibility = visibility;
     this->typeName = typeName;
     this->constraints = constraints;
+    this->sequence = sequence;
     if(constraints.length() > 0)
         this->constr = true;
     else
@@ -52,6 +53,11 @@ Type::Type(std::string name, std::string visibility, std::string typeName, std::
         this->vis = true;
     else
         this->vis = false;
+
+    if(sequence.size() > 0)
+        this->seq = true;
+    else
+        this->seq = false;
 }
 
 std::string Type::getName(){
@@ -67,12 +73,20 @@ std::string Type::getConstraints(){
     return this->constraints;
 }
 
+std::vector<seq_type> Type::getSequence(){
+    return this->sequence;
+}
+
 bool Type::hasConstraints(){
     return this->constr;
 }
 
 bool Type::hasVisibility(){
     return this->vis;
+}
+
+bool Type::hasSequence(){
+    return this->seq;
 }
 
 std::ostream &operator<<(std::ostream &os, Type &type){
@@ -82,5 +96,10 @@ std::ostream &operator<<(std::ostream &os, Type &type){
     os<<type.getTypeName()<<std::endl;
     if(type.hasConstraints())
         os<<type.getConstraints()<<std::endl;
+    if(type.hasSequence()){
+        auto seq = type.getSequence();
+        for(const auto& val : seq)
+            os<<val.name<<" : "<<val.type<<"["<<val.cons<<"]"<<std::endl;
+    }
     return os;
 }

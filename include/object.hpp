@@ -3,22 +3,32 @@
 #include <vector>
 #include <tuple>
 
+struct seq_type {
+    std::string name;
+    std::string type;
+    std::string cons;
+};
+
 class Type {
 private:
     std::string name;
     std::string visibility;
     std::string typeName;
     std::string constraints;
+    std::vector<seq_type> sequence;
     bool constr;
     bool vis;
+    bool seq;
 public:
-    Type(std::string name, std::string visibility, std::string typeName, std::string constraints);
+    Type(std::string name, std::string visibility, std::string typeName, std::string constraints, std::vector<seq_type> &sequence);
     std::string getName();
     std::string getVisibility();
     std::string getTypeName();
     std::string getConstraints();
+    std::vector<seq_type> getSequence();
     bool hasConstraints();
     bool hasVisibility();
+    bool hasSequence();
 };
 
 std::ostream &operator<<(std::ostream &os, Type &type);
