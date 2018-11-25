@@ -42,12 +42,7 @@ Type::Type(std::string name, std::string visibility, std::string typeName, std::
     this->name = name;
     this->visibility = visibility;
     this->typeName = typeName;
-    this->constraints = constraints;
     this->sequence = sequence;
-    if(constraints.length() > 0)
-        this->constr = true;
-    else
-        this->constr = false;
     
     if(visibility.length() > 0)
         this->vis = true;
@@ -58,6 +53,16 @@ Type::Type(std::string name, std::string visibility, std::string typeName, std::
         this->seq = true;
     else
         this->seq = false;
+
+    std::string::const_iterator iter = constraints.begin();
+    std::string::const_iterator end = constraints.end();
+
+    std::vector<unsigned int> constr;
+
+    namespace qi = boost::spirit::qi;
+	bool r = qi::parse(iter, end, qi::uint_ % qi::lit(".."), constr);
+    this->constraints = constr;
+
 }
 
 std::string Type::getName(){
@@ -69,7 +74,7 @@ std::string Type::getVisibility(){
 std::string Type::getTypeName(){
     return this->typeName;
 }
-std::string Type::getConstraints(){
+std::vector<unsigned int> Type::getConstraints(){
     return this->constraints;
 }
 
@@ -78,7 +83,7 @@ std::vector<seq_type> Type::getSequence(){
 }
 
 bool Type::hasConstraints(){
-    return this->constr;
+    return this->constraints.size() > 0;
 }
 
 bool Type::hasVisibility(){
@@ -94,12 +99,25 @@ std::ostream &operator<<(std::ostream &os, Type &type){
     if(type.hasVisibility())
         os<<type.getVisibility()<<std::endl;
     os<<type.getTypeName()<<std::endl;
-    if(type.hasConstraints())
-        os<<type.getConstraints()<<std::endl;
+    if(type.hasConstraints()){
+        auto constr = type.getConstraints();
+        if(constr.size() == 1)
+            os<<constr[0]<<std::endl;
+        else
+            os<<constr[0]<<":"<<constr[1]<<std::endl;
+    }
     if(type.hasSequence()){
         auto seq = type.getSequence();
-        for(const auto& val : seq)
-            os<<val.name<<" : "<<val.type<<"["<<val.cons<<"]"<<std::endl;
+        for(const auto& val : seq){
+            os<<val.name<<" : "<<val.type<<" ";
+            if(val.cons.size() == 1){
+                os<<val.cons[0];
+            } else if(val.cons.size() == 2){
+                os<<val.cons[0]<<":"<<val.cons[1];
+            }
+            os<<std::endl;
+        }
+            
     }
     return os;
 }

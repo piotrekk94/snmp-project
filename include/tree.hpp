@@ -23,6 +23,7 @@ class ObjectTree {
 private:
     TreeNode *root;
     TreeNode *getNode(std::string name);
+    TreeNode *getNode(ObjectPath& path, bool addMissing);
 public:
     ObjectTree(Object *object);
     void addObject(Object *object, ObjectPath& path);

@@ -1,4 +1,5 @@
 #pragma once
+#include <boost/spirit/include/qi.hpp>
 #include <string>
 #include <vector>
 #include <tuple>
@@ -6,7 +7,7 @@
 struct seq_type {
     std::string name;
     std::string type;
-    std::string cons;
+    std::vector<unsigned int> cons;
 };
 
 class Type {
@@ -14,9 +15,8 @@ private:
     std::string name;
     std::string visibility;
     std::string typeName;
-    std::string constraints;
+    std::vector<unsigned int> constraints;
     std::vector<seq_type> sequence;
-    bool constr;
     bool vis;
     bool seq;
 public:
@@ -24,7 +24,7 @@ public:
     std::string getName();
     std::string getVisibility();
     std::string getTypeName();
-    std::string getConstraints();
+    std::vector<unsigned int> getConstraints();
     std::vector<seq_type> getSequence();
     bool hasConstraints();
     bool hasVisibility();

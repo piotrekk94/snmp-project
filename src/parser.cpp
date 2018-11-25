@@ -160,7 +160,16 @@ void add_type(data::type const& type){
 	for(auto const& val : type.sequence){
 		seq_type seq;
 		seq.name = val.name;
-		seq.cons = val.cons;
+
+		std::string::const_iterator iter = val.cons.begin();
+		std::string::const_iterator end = val.cons.end();
+
+		std::vector<unsigned int> constr;
+
+		namespace qi = boost::spirit::qi;
+		bool r = qi::parse(iter, end, qi::uint_ % qi::lit(".."), constr);
+		seq.cons = constr;
+
 		seq.type = val.type;
 		seq_types.push_back(seq);
 	}

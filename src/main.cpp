@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <ui.hpp>
 
 int main(int argc, char* argv[]){
 
@@ -21,6 +22,10 @@ int main(int argc, char* argv[]){
 
 	for(auto &val : types)
 		std::cout<<val<<std::endl;
+
+	for(;;){
+		test_ber();
+	}
 
 	return 0;
 }
