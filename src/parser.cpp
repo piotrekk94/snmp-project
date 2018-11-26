@@ -40,21 +40,23 @@ namespace data {
 		struct path path;
 	};
 
-	struct obj
-	{
-		std::string name;
-		std::vector<std::string> syntax;
-		std::string access;
-		std::string status;
-		std::string desc;
-		struct path path;
-	};
-
 	struct seq_member
 	{
 		std::string name;
 		std::string type;
 		std::string cons;
+	};
+
+	struct obj
+	{
+		std::string name;
+		std::string typeName;
+		std::vector<data::seq_member> sequence;
+		std::string constraints;
+		std::string access;
+		std::string status;
+		std::string desc;
+		struct path path;
 	};
 
 	struct type
@@ -107,7 +109,9 @@ BOOST_FUSION_ADAPT_STRUCT(
 BOOST_FUSION_ADAPT_STRUCT(
 	data::obj,
 	(std::string, name),
-	(std::vector<std::string>, syntax),
+	(std::string, typeName),
+	(std::vector<data::seq_member>, sequence),
+	(std::string, constraints),
 	(std::string, access),
 	(std::string, status),
 	(std::string, desc),
@@ -139,13 +143,24 @@ void add_oid(data::oid const& oid){
 }
 
 void add_obj(data::obj const& obj){
-	std::string syntax;
-	for(auto const& val : obj.syntax){
-		syntax.append(val);
-		syntax.append(" ");
-	}
+	std::vector<seq_type> seq_types;
+	for(auto const& val : obj.sequence){
+		seq_type seq;
+		seq.name = val.name;
 
-	Object *object = new Object(obj.name, syntax, obj.access, obj.status, obj.desc);
+		std::string::const_iterator iter = val.cons.begin();
+		std::string::const_iterator end = val.cons.end();
+
+		std::vector<unsigned int> constr;
+
+		namespace qi = boost::spirit::qi;
+		bool r = qi::parse(iter, end, qi::uint_ % qi::lit(".."), constr);
+		seq.cons = constr;
+
+		seq.type = val.type;
+		seq_types.push_back(seq);
+	}
+	Object *object = new Object(obj.name, obj.typeName, obj.constraints, seq_types, obj.access, obj.status, obj.desc);
 	ObjectPath path;
 	path.path.push_back(std::make_tuple(obj.path.startNode, -1));
 	for(auto const& val : obj.path.path){
@@ -218,7 +233,7 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 		oid %= name >> qi::lit("OBJECT IDENTIFIER") >> path;
 		oids = +oid[&add_oid];
 
-		obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> syntax >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
+		obj %= name >> qi::lit("OBJECT-TYPE") >> qi::lit("SYNTAX") >> type_name >> -('{' >> seq_member % ',' >> '}') >> -(range | size) >> qi::lit("ACCESS") >> name >> qi::lit("STATUS") >> name >> qi::lit("DESCRIPTION") >> desc >> path;
 		objs = +obj[&add_obj];
 
 		visibility %= '[' >> qi::lexeme[+(qi::char_ - ']')] >> ']';
@@ -231,7 +246,7 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 
 		size %= '(' >> qi::lit("SIZE") >> '(' >> qi::lexeme[+(ascii::digit)] >> ')' >> ')';
 
-		type_name %= qi::string("INTEGER") | qi::string("OCTET STRING") | qi::string("OBJECT IDENTIFIER") | qi::string("NULL") | (qi::string("SEQUENCE OF") >> type_name) | name;
+		type_name %= qi::string("INTEGER") | qi::string("OCTET STRING") | qi::string("OBJECT IDENTIFIER") | qi::string("NULL") | (qi::string("SEQUENCE OF ") >> type_name) | name;
 
 		//type_syntax %= type_name >> -(qi::string("{") >> qi::lexeme[+(qi::char_ - '}')]>> qi::string("}"));
 

@@ -6,13 +6,26 @@ Object::Object(std::string name){
     this->leaf = false;
 }
 
-Object::Object(std::string name, std::string syntax, std::string access, std::string status, std::string desc){
+Object::Object(std::string name, std::string typeName, std::string constraints, std::vector<seq_type> &sequence, std::string access, std::string status, std::string desc){
     this->name = name;
-    this->syntax = syntax;
+    this->typeName = typeName;
+    this->sequence = sequence;
     this->access = access;
     this->status = status;
     this->desc = desc;
     this->leaf = true;
+
+    if(constraints.length() > 0){
+        std::string::const_iterator iter = constraints.begin();
+        std::string::const_iterator end = constraints.end();
+
+        std::vector<unsigned int> constr;
+
+        namespace qi = boost::spirit::qi;
+        qi::parse(iter, end, qi::uint_ % qi::lit(".."), constr);
+        this->constraints = constr;
+    }
+
 }
 
 std::string Object::getName(){
@@ -23,8 +36,8 @@ bool Object::isLeaf(){
     return this->leaf;
 }
 
-std::string Object::getSyntax(){
-    return this->syntax;
+std::string Object::getTypeName(){
+    return this->typeName;
 }
 std::string Object::getAccess(){
     return this->access;
@@ -40,7 +53,7 @@ std::vector<Type> types;
 
 Type::Type(std::string name, std::string visibility, std::string typeName, std::string constraints, std::vector<seq_type> &sequence){
     this->name = name;
-    this->visibility = visibility;
+    //this->visibility = visibility;
     this->typeName = typeName;
     this->sequence = sequence;
     
@@ -54,22 +67,41 @@ Type::Type(std::string name, std::string visibility, std::string typeName, std::
     else
         this->seq = false;
 
-    std::string::const_iterator iter = constraints.begin();
-    std::string::const_iterator end = constraints.end();
 
-    std::vector<unsigned int> constr;
+    if(constraints.length() > 0){
+        std::string::const_iterator iter = constraints.begin();
+        std::string::const_iterator end = constraints.end();
 
-    namespace qi = boost::spirit::qi;
-	bool r = qi::parse(iter, end, qi::uint_ % qi::lit(".."), constr);
-    this->constraints = constr;
+        std::vector<unsigned int> constr;
+
+        namespace qi = boost::spirit::qi;
+        qi::parse(iter, end, qi::uint_ % qi::lit(".."), constr);
+        this->constraints = constr;
+    }
+
+    this->visibility = CONTEXT_SPECIFIC;
+    this->typeId = 2137;
+
+    if(visibility.length() > 0){
+        std::string::const_iterator iter = visibility.begin();
+        std::string::const_iterator end = visibility.end();
+
+        namespace qi = boost::spirit::qi;
+        namespace ascii = boost::spirit::ascii;
+        using boost::phoenix::ref;
+        qi::phrase_parse(iter, end, (qi::lit("UNIVERSAL")[ref(this->visibility) = UNIVERSAL] | qi::lit("APPLICATION")[ref(this->visibility) = APPLICATION] | qi::lit("CONTEXT-SPECIFIC")[ref(this->visibility) = CONTEXT_SPECIFIC] | qi::lit("PRIVATE")[ref(this->visibility) = PRIVATE]) >> qi::int_[ref(this->typeId) = qi::_1], qi::char_(' '));
+    }
 
 }
 
 std::string Type::getName(){
     return this->name;
 }
-std::string Type::getVisibility(){
+int Type::getVisibility(){
     return this->visibility;
+}
+int Type::getTypeId(){
+    return this->typeId;
 }
 std::string Type::getTypeName(){
     return this->typeName;
@@ -86,19 +118,15 @@ bool Type::hasConstraints(){
     return this->constraints.size() > 0;
 }
 
-bool Type::hasVisibility(){
-    return this->vis;
-}
-
 bool Type::hasSequence(){
     return this->seq;
 }
 
 std::ostream &operator<<(std::ostream &os, Type &type){
     os<<type.getName()<<std::endl;
-    if(type.hasVisibility())
-        os<<type.getVisibility()<<std::endl;
     os<<type.getTypeName()<<std::endl;
+    os<<VisibilityNames[type.getVisibility()]<<std::endl;
+    os<<type.getTypeId()<<std::endl;
     if(type.hasConstraints()){
         auto constr = type.getConstraints();
         if(constr.size() == 1)

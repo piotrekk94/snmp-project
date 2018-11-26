@@ -1,8 +1,15 @@
 #pragma once
+#define BOOST_SPIRIT_USE_PHOENIX_V3
 #include <boost/spirit/include/qi.hpp>
+#include <boost/phoenix/phoenix.hpp>
+#include <string>
 #include <string>
 #include <vector>
 #include <tuple>
+
+enum Visibility {UNIVERSAL, APPLICATION, CONTEXT_SPECIFIC, PRIVATE};
+
+const std::string VisibilityNames[] = {"UNIVERSAL", "APPLICATION", "CONTEXT-SPECIFIC", "PRIVATE"};
 
 struct seq_type {
     std::string name;
@@ -13,7 +20,8 @@ struct seq_type {
 class Type {
 private:
     std::string name;
-    std::string visibility;
+    int visibility;
+    int typeId;
     std::string typeName;
     std::vector<unsigned int> constraints;
     std::vector<seq_type> sequence;
@@ -22,12 +30,12 @@ private:
 public:
     Type(std::string name, std::string visibility, std::string typeName, std::string constraints, std::vector<seq_type> &sequence);
     std::string getName();
-    std::string getVisibility();
+    int getVisibility();
+    int getTypeId();
     std::string getTypeName();
     std::vector<unsigned int> getConstraints();
     std::vector<seq_type> getSequence();
     bool hasConstraints();
-    bool hasVisibility();
     bool hasSequence();
 };
 
@@ -39,16 +47,18 @@ class Object {
 private:
     bool leaf;
     std::string name;
-    std::string syntax;
+    std::string typeName;
+    std::vector<unsigned int> constraints;
+    std::vector<seq_type> sequence;
     std::string access;
     std::string status;
     std::string desc;
 public:
     Object(std::string name);
-    Object(std::string name, std::string syntax, std::string access, std::string status, std::string desc);
+    Object(std::string name, std::string typeName, std::string constraints, std::vector<seq_type> &sequence, std::string access, std::string status, std::string desc);
     std::string getName();
     bool isLeaf();
-    std::string getSyntax();
+    std::string getTypeName();
     std::string getAccess();
     std::string getStatus();
     std::string getDesc();

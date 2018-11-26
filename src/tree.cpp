@@ -59,7 +59,7 @@ void TreeNode::printLeaf(std::vector<std::string> &res, int level){
     for(int i = 0; i < level; i++)
         node.append("\t");
 
-    res.push_back(node + "SYNTAX: " + this->getValue()->getSyntax());
+    res.push_back(node + "SYNTAX: " + this->getValue()->getTypeName());
     res.push_back(node + "ACCESS: " + this->getValue()->getAccess());
     res.push_back(node + "STATUS: " + this->getValue()->getStatus());
     res.push_back(node + "DESC: " + this->getValue()->getDesc());
