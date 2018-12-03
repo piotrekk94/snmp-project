@@ -48,12 +48,14 @@ std::string Object::getStatus(){
 std::string Object::getDesc(){
     return this->desc;
 }
+std::vector<unsigned int> Object::getConstraints(){
+    return this->constraints;
+}
 
 std::vector<Type> types;
 
-Type::Type(std::string name, std::string visibility, std::string typeName, std::string constraints, std::vector<seq_type> &sequence){
+Type::Type(std::string name, std::string visibility, std::string mode, std::string typeName, std::string constraints, std::vector<seq_type> &sequence){
     this->name = name;
-    //this->visibility = visibility;
     this->typeName = typeName;
     this->sequence = sequence;
     
@@ -80,7 +82,7 @@ Type::Type(std::string name, std::string visibility, std::string typeName, std::
     }
 
     this->visibility = CONTEXT_SPECIFIC;
-    this->typeId = 2137;
+    this->typeId = 0;
 
     if(visibility.length() > 0){
         std::string::const_iterator iter = visibility.begin();
@@ -90,6 +92,13 @@ Type::Type(std::string name, std::string visibility, std::string typeName, std::
         namespace ascii = boost::spirit::ascii;
         using boost::phoenix::ref;
         qi::phrase_parse(iter, end, (qi::lit("UNIVERSAL")[ref(this->visibility) = UNIVERSAL] | qi::lit("APPLICATION")[ref(this->visibility) = APPLICATION] | qi::lit("CONTEXT-SPECIFIC")[ref(this->visibility) = CONTEXT_SPECIFIC] | qi::lit("PRIVATE")[ref(this->visibility) = PRIVATE]) >> qi::int_[ref(this->typeId) = qi::_1], qi::char_(' '));
+    }
+
+    implicit = true;
+
+    if(mode.length() > 0){
+        if(mode.compare("EXPLICIT") == 0)
+            implicit = false;
     }
 
 }
@@ -120,6 +129,10 @@ bool Type::hasConstraints(){
 
 bool Type::hasSequence(){
     return this->seq;
+}
+
+bool Type::getImplicit(){
+    return this->implicit;
 }
 
 std::ostream &operator<<(std::ostream &os, Type &type){

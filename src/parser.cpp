@@ -188,7 +188,7 @@ void add_type(data::type const& type){
 		seq.type = val.type;
 		seq_types.push_back(seq);
 	}
-	Type t(type.name, type.visibility, type.typeName, type.constraints, seq_types);
+	Type t(type.name, type.visibility, type.mode, type.typeName, type.constraints, seq_types);
 	types.push_back(t);
 }
 

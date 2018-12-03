@@ -120,7 +120,7 @@ TreeNode *ObjectTree::getNode(ObjectPath& path, bool addMissing){
                     nextNode = new TreeNode(newObject);
                     node->addNode(nextNode, std::get<1>(path.path[i]));
                 } else {
-                    std::cout<<"Could not find"<<i<<":"<<std::get<1>(path.path[i])<<std::endl;
+                    std::cout<<"Could not find "<<i<<":"<<std::get<1>(path.path[i])<<std::endl;
                     return nullptr;
                 }
             }
