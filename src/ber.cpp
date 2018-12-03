@@ -122,7 +122,12 @@ void Encoder::encode(void){
     }else if(typeName == "OCTET STRING"){
         if(constr.size() == 1){
             if(val.length() > constr[0]){
-                printf("String too long, should be shorter than %d\n", constr[0]);
+                printf("Octet string too long, should be shorter than %d\n", constr[0]);
+                throw "Invalid data";
+            }
+        } else if(constr.size() == 2){
+            if(val.length() < constr[0] || val.length() > constr[1]){
+                printf("Octet string size out of range, should be between %d and %d\n", constr[0], constr[1]);
                 throw "Invalid data";
             }
         }
