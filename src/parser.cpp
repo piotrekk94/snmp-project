@@ -244,7 +244,7 @@ struct mib_parser : qi::grammar<Iterator, void(), SkipType>
 
 		range %= '(' >> qi::lexeme[+(ascii::digit)] >> qi::string("..") >> qi::lexeme[+(ascii::digit)] >> ')';
 
-		size %= '(' >> qi::lit("SIZE") >> '(' >> qi::lexeme[+(ascii::digit)] >> ')' >> ')';
+		size %= '(' >> qi::lit("SIZE") >> (('(' >> qi::lexeme[+(ascii::digit)] >> ')') | range) >> ')';
 
 		type_name %= qi::string("INTEGER") | qi::string("OCTET STRING") | qi::string("OBJECT IDENTIFIER") | qi::string("NULL") | (qi::string("SEQUENCE OF ") >> type_name) | name;
 
