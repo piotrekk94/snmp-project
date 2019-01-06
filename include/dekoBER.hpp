@@ -14,6 +14,7 @@ private:
     std::vector<BerObject*> children;
     void AsInt(int depth);
     void AsOid(int depth);
+    void AsStr(int depth);
     uint64_t DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData);
 public:
     void Display(int depth);

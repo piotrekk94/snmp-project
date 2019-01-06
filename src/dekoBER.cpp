@@ -1,6 +1,7 @@
 #include <dekoBER.hpp>
 #include <object.hpp>
 #include <cstdio>
+#include <cctype>
 
 static const char* const classNames[] = {"UNIVERSAL", "APPLICATION", "CONTEXT-SPECIFIC", "PRIVATE"};
 static const char* const typeNames[] = {"PRIMITIVE", "CONSTRUCTED"};
@@ -26,7 +27,7 @@ void BerObject::AsInt(int depth)
 void BerObject::AsOid(int depth)
 {
     std::vector<uint64_t> oidData;
-    std::size_t currentOctet;
+    std::size_t currentOctet = 0;
     uint8_t x, y;
 
     x = objData[0] / 40;
@@ -35,8 +36,6 @@ void BerObject::AsOid(int depth)
     oidData.push_back(x);
     oidData.push_back(y);
 
-    currentOctet = 1;
-
     while(currentOctet < objData.size() - 1){
         oidData.push_back(DecodeVLQ(currentOctet, objData));
     }
@@ -44,7 +43,19 @@ void BerObject::AsOid(int depth)
     printf("%*sAS OID: ", depth, "");
 
     for(auto &val : oidData)
-        printf("%llu ", val);
+        printf(".%llu", val);
+
+    printf("\n");
+}
+
+void BerObject::AsStr(int depth)
+{
+    printf("%*sAS STR: ", depth, "");
+
+    for(auto &val : objData)
+        printf("%c", isalnum(val) ? (char)val : '.');
+
+    printf("\n");
 }
 
 uint64_t BerObject::DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData)
@@ -91,11 +102,17 @@ void BerObject::Display(int depth)
 
     printf("\n");
 
-    if(objClass == UNIVERSAL && objTag == 2)
+    if(objClass == UNIVERSAL && objTag == 2){
         AsInt(depth);
+    }
     
-    if(objClass == UNIVERSAL && objTag == 6)
+    if(objClass == UNIVERSAL && objTag == 4){
+        AsStr(depth);
+    }
+
+    if(objClass == UNIVERSAL && objTag == 6){
         AsOid(depth);
+    }
 
     if(objMIBType == nullptr){
         printf("%*sNO MIB TYPE FOUND\n", depth, "");
