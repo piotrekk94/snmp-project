@@ -125,11 +125,12 @@ void DekoBER::Decode(std::vector<uint8_t> &encodedData, BerObject *parent)
 
         /* undefined length */
         if(objLen == 0){
-            for(std::size_t i = 0; i < objLen; i++){
+            for(std::size_t i = 0; (currentOctet + 1) < encodedData.size(); i++){
                 objData.push_back(encodedData[++currentOctet]);
                 if(i > 0 && encodedData[currentOctet] == 0 && encodedData[currentOctet - 1] == 0){
                     objData.pop_back();
                     objData.pop_back();
+                    break;
                 }
             }
         } else {

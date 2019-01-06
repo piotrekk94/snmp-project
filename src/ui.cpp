@@ -1,7 +1,9 @@
+#include <dekoBER.hpp>
+
+#if 0
 #include <ui.hpp>
 #include <stack>
 #include <ber.hpp>
-#include <dekoBER.hpp>
 
 namespace qi = boost::spirit::qi;
 
@@ -34,6 +36,8 @@ void test_ber(void){
 
 }
 
+#endif
+
 void test_dekober(void)
 {
     std::vector<uint8_t> berStr {0x04, 0x04, 0x01, 0x02, 0x03, 0x04};
@@ -55,4 +59,8 @@ void test_dekober(void)
     std::vector<uint8_t> berMIB {0x30, 0x08, 0x30, 0x06, 0x42, 0x01, 0x03, 0x41, 0x01, 0x08};
 
     DekoBER decMIB(berMIB);
+
+    std::vector<uint8_t> berUndef {0x02, 0x00, 0x02, 0x01, 0x03, 0x07, 0x00, 0x00};
+
+    DekoBER decUndef(berUndef);
 }
