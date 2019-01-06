@@ -46,6 +46,7 @@ class DekoBER {
 private:
     BerObject *root;
     void Decode(std::vector<uint8_t> &encodedData, BerObject *parent);
+    uint64_t DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData);
     void Display(std::vector<uint8_t> &data);
     void Display(BerObject *obj);
 public:

@@ -65,6 +65,29 @@ DekoBER::DekoBER(std::vector<uint8_t> &encodedData)
     Display(root);
 }
 
+uint64_t DekoBER::DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData)
+{
+    uint64_t res;
+    std::vector<uint8_t> vlqOctets;
+
+    while((encodedData[++currentOctet] & 0x80) != 0){
+        vlqOctets.push_back(encodedData[currentOctet] & 0x7F);
+    }
+
+    res = encodedData[currentOctet];
+
+    for(int i = 1; !vlqOctets.empty(); i++){
+        uint64_t tmp = vlqOctets.back();
+        vlqOctets.pop_back();
+        for(int j = 0; j < i; j++)
+            tmp = tmp << 7;
+
+        res += tmp;
+    }
+    
+    return res;
+}
+
 void DekoBER::Decode(std::vector<uint8_t> &encodedData, BerObject *parent)
 {
     std::size_t currentOctet = 0;
@@ -85,21 +108,7 @@ void DekoBER::Decode(std::vector<uint8_t> &encodedData, BerObject *parent)
 
         /* multi octet tag */
         if(objTag == 0x1F){
-            std::vector<uint8_t> tagOctets;
-            while((encodedData[++currentOctet] & 0x80) != 0){
-                tagOctets.push_back(encodedData[currentOctet] & 0x7F);
-            }
-
-            objTag = encodedData[currentOctet];
-
-            for(int i = 1; !tagOctets.empty(); i++){
-                uint64_t tmp = tagOctets.back();
-                tagOctets.pop_back();
-                for(int j = 0; j < i; j++)
-                    tmp = tmp << 7;
-
-                objTag += tmp;
-            }
+            objTag = DecodeVLQ(currentOctet, encodedData);
         }
 
         objLen = encodedData[++currentOctet];
