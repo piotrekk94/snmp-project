@@ -3,6 +3,9 @@
 
 void test_dekober(void)
 {
+
+    printf("*******\nDEKOBER\n*******\n");
+
     std::vector<uint8_t> berStr {0x04, 0x04, 0x01, 0x02, 0x03, 0x04};
 
     DekoBER decStr(berStr);
@@ -26,6 +29,9 @@ void test_dekober(void)
     std::vector<uint8_t> berUndef {0x02, 0x00, 0x02, 0x01, 0x03, 0x07, 0x00, 0x00};
 
     DekoBER decUndef(berUndef);
+
+    printf("-------\nDEKOBER\n-------\n");
+}
 
 void test_kober(void)
 {

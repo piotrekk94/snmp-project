@@ -47,6 +47,7 @@ void DekoBER::Display(std::vector<uint8_t> &data)
         }
         printf("%02x ", data[i]);
     }
+    printf("\n");
 }
 
 void DekoBER::Display(BerObject *obj)
