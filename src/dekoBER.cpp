@@ -75,6 +75,7 @@ void DekoBER::Decode(std::vector<uint8_t> &encodedData, BerObject *parent)
         uint8_t objType;
         uint64_t objTag;
         uint64_t objLen;
+        bool undefinedLength;
         std::vector<uint8_t> objData;
         Type *objMIBType = nullptr;
 
@@ -103,6 +104,12 @@ void DekoBER::Decode(std::vector<uint8_t> &encodedData, BerObject *parent)
 
         objLen = encodedData[++currentOctet];
 
+        if(objLen == 0x80){
+            undefinedLength = true;
+        }else{
+            undefinedLength = false;
+        }
+
         /* multi octet length */
         if((objLen & 0x80) != 0){
             std::vector<uint8_t> lengthOctets;
@@ -125,7 +132,7 @@ void DekoBER::Decode(std::vector<uint8_t> &encodedData, BerObject *parent)
         }
 
         /* undefined length */
-        if(objLen == 0){
+        if(undefinedLength){
             for(std::size_t i = 0; (currentOctet + 1) < encodedData.size(); i++){
                 objData.push_back(encodedData[++currentOctet]);
                 if(i > 0 && encodedData[currentOctet] == 0 && encodedData[currentOctet - 1] == 0){
