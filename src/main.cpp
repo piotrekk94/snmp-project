@@ -46,6 +46,7 @@ int main(int argc, char* argv[]){
 	*/
 
 	test_dekober();
+	test_kober();
 
 	return 0;
 }

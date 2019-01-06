@@ -1,42 +1,5 @@
 #include <dekoBER.hpp>
-
-#if 0
-#include <ui.hpp>
-#include <stack>
-#include <ber.hpp>
-
-namespace qi = boost::spirit::qi;
-
-void test_ber(void){
-    std::string oid;
-    std::string value;
-    std::cout<<"OID:"<<std::endl;
-    std::getline(std::cin, oid);
-    std::cout<<"Value:"<<std::endl;
-    std::getline(std::cin, value);
-
-	std::string::const_iterator iter = oid.begin();
-    std::string::const_iterator end = oid.end();
-
-    std::vector<int> oid_v;
-
-	qi::parse(iter, end, qi::int_ % '.', oid_v);
-
-    ObjectPath path(oid_v);
-
-    auto node = tree->getObject(path);
-
-    if(node != nullptr){
-        std::cout<<"Entry found: "<<node->getName()<<" : "<<node->getTypeName()<<std::endl;
-    }
-
-    Encoder enc(node, value);
-
-    enc.encode();
-
-}
-
-#endif
+#include <koBER.hpp>
 
 void test_dekober(void)
 {
@@ -63,4 +26,37 @@ void test_dekober(void)
     std::vector<uint8_t> berUndef {0x02, 0x00, 0x02, 0x01, 0x03, 0x07, 0x00, 0x00};
 
     DekoBER decUndef(berUndef);
+
+void test_kober(void)
+{
+    printf("*****\nKOBER\n*****\n");
+
+    MibObject mibInt(0, 0, 2);
+    mibInt.setIntData(0x2137);
+
+    KoBER encInt(&mibInt);
+
+    MibObject mibStr(0, 0, 4);
+    mibStr.setBinData({'A', 'B', 'C', 'D'});
+
+    KoBER encStr(&mibStr);
+
+    MibObject mibNul(0, 0, 5);
+
+    KoBER encNul(&mibNul);
+
+    MibObject mibOid(0, 0, 6);
+    mibOid.setOidData({1, 3, 350, 212});
+
+    KoBER encOid(&mibOid);
+
+    MibObject mibSeq(0, 1, 16);
+    mibSeq.AddChild(&mibInt);
+    mibSeq.AddChild(&mibStr);
+    mibSeq.AddChild(&mibNul);
+    mibSeq.AddChild(&mibOid);
+
+    KoBER encSeq(&mibSeq);
+
+    printf("-----\nKOBER\n-----\n");
 }

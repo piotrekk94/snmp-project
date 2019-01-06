@@ -3,5 +3,5 @@
 #include <boost/spirit/include/qi.hpp>
 #include <tree.hpp>
 
-void test_ber(void);
+void test_kober(void);
 void test_dekober(void);
