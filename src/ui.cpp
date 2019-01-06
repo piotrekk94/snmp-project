@@ -52,7 +52,7 @@ void test_kober(void)
     KoBER encNul(&mibNul);
 
     MibObject mibOid(0, 0, 6);
-    mibOid.setOidData({1, 3, 350, 212});
+    mibOid.setOidData({1, 3, 350, 212, 357});
 
     KoBER encOid(&mibOid);
 

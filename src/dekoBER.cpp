@@ -7,6 +7,69 @@ static const char* const typeNames[] = {"PRIMITIVE", "CONSTRUCTED"};
 
 static BerTag tagNames;
 
+void BerObject::AsInt(int depth)
+{
+    int64_t res = 0;
+    int i;
+
+    for(i = 0; i < objData.size(); i++){
+        res = (res << 8) | objData[i];
+    }
+
+    res = res << (8 - i) * 8;
+
+    res = res >> (8 - i) * 8;
+
+    printf("%*sAS INTEGER: %lld\n", depth, "", res);
+}
+
+void BerObject::AsOid(int depth)
+{
+    std::vector<uint64_t> oidData;
+    std::size_t currentOctet;
+    uint8_t x, y;
+
+    x = objData[0] / 40;
+    y = objData[0] % 40;
+
+    oidData.push_back(x);
+    oidData.push_back(y);
+
+    currentOctet = 1;
+
+    while(currentOctet < objData.size() - 1){
+        oidData.push_back(DecodeVLQ(currentOctet, objData));
+    }
+
+    printf("%*sAS OID: ", depth, "");
+
+    for(auto &val : oidData)
+        printf("%llu ", val);
+}
+
+uint64_t BerObject::DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData)
+{
+    uint64_t res;
+    std::vector<uint8_t> vlqOctets;
+
+    while((encodedData[++currentOctet] & 0x80) != 0 && currentOctet < encodedData.size()){
+        vlqOctets.push_back(encodedData[currentOctet] & 0x7F);
+    }
+
+    res = encodedData[currentOctet];
+
+    for(int i = 1; !vlqOctets.empty(); i++){
+        uint64_t tmp = vlqOctets.back();
+        vlqOctets.pop_back();
+        for(int j = 0; j < i; j++)
+            tmp = tmp << 7;
+
+        res += tmp;
+    }
+    
+    return res;
+}
+
 void BerObject::Display(int depth)
 {
     printf("%*s----\n", depth, "");
@@ -27,6 +90,12 @@ void BerObject::Display(int depth)
     }
 
     printf("\n");
+
+    if(objClass == UNIVERSAL && objTag == 2)
+        AsInt(depth);
+    
+    if(objClass == UNIVERSAL && objTag == 6)
+        AsOid(depth);
 
     if(objMIBType == nullptr){
         printf("%*sNO MIB TYPE FOUND\n", depth, "");

@@ -12,6 +12,9 @@ private:
     uint64_t objLen;
     std::vector<uint8_t> objData;
     std::vector<BerObject*> children;
+    void AsInt(int depth);
+    void AsOid(int depth);
+    uint64_t DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData);
 public:
     void Display(int depth);
     BerObject(uint8_t objClass, uint8_t objType, uint64_t objTag, Type *objMIBType, uint64_t objLen, std::vector<uint8_t> &objData) {
