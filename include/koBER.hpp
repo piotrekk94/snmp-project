@@ -34,6 +34,7 @@ public:
 
 class KoBER {
 private:
+    std::vector<uint8_t> berData;
     void Encode(MibObject *obj, std::vector<uint8_t> &encodedData);
     void EncodePayload(MibObject *obj, std::vector<uint8_t> &encodedData);
     void EncodeOid(std::vector<uint64_t> &oidData, std::vector<uint8_t> &encodedData);
@@ -44,4 +45,5 @@ private:
     void Display(MibObject* obj);
 public:
     KoBER(MibObject *root);
+    std::vector<uint8_t> &GetBerData(void) {return berData;};
 };

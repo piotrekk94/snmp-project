@@ -64,5 +64,16 @@ void test_kober(void)
 
     KoBER encSeq(&mibSeq);
 
+    MibObject mibSeq2(0, 1, 16);
+
+    mibSeq2.AddChild(&mibSeq);
+    mibSeq2.AddChild(&mibStr);
+
+    KoBER encSeq2(&mibSeq2);
+
     printf("-----\nKOBER\n-----\n");
+
+    printf("*=+-\nFINAL FORM\n-+=*\n");
+
+    DekoBER finalForm(encSeq2.GetBerData());
 }

@@ -29,13 +29,11 @@ void MibObject::Display(int depth)
 
 KoBER::KoBER(MibObject *root)
 {
-    std::vector<uint8_t> encodedData;
-
     printf("Data to encode:\n");
     Display(root);
-    Encode(root, encodedData);
+    Encode(root, berData);
     printf("Encoded data:");
-    Display(encodedData);
+    Display(berData);
 }
 
 void KoBER::Display(std::vector<uint8_t> &data)
