@@ -1,6 +1,7 @@
 #include <ui.hpp>
 #include <stack>
 #include <ber.hpp>
+#include <dekoBER.hpp>
 
 namespace qi = boost::spirit::qi;
 
@@ -31,4 +32,27 @@ void test_ber(void){
 
     enc.encode();
 
+}
+
+void test_dekober(void)
+{
+    std::vector<uint8_t> berStr {0x04, 0x04, 0x01, 0x02, 0x03, 0x04};
+
+    DekoBER decStr(berStr);
+
+    std::vector<uint8_t> berInt {0x02, 0x02, 0xFF, 0x7F};
+
+    DekoBER decInt(berInt);
+
+    std::vector<uint8_t> ber2Int {0x30, 0x06, 0x02, 0x01, 0x03, 0x02, 0x01, 0x08};
+
+    DekoBER dec2Int(ber2Int);
+
+    std::vector<uint8_t> berSeq2Int {0x30, 0x08, 0x30, 0x06, 0x02, 0x01, 0x03, 0x02, 0x01, 0x08};
+
+    DekoBER decSeq2Int(berSeq2Int);
+
+    std::vector<uint8_t> berMIB {0x30, 0x08, 0x30, 0x06, 0x42, 0x01, 0x03, 0x41, 0x01, 0x08};
+
+    DekoBER decMIB(berMIB);
 }

@@ -4,3 +4,4 @@
 #include <tree.hpp>
 
 void test_ber(void);
+void test_dekober(void);

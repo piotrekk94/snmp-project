@@ -39,9 +39,13 @@ int main(int argc, char* argv[]){
 	for(auto &val : types)
 		std::cout<<val<<std::endl;
 
+	/*
 	for(;;){
 		test_ber();
 	}
+	*/
+
+	test_dekober();
 
 	return 0;
 }
