@@ -10,6 +10,13 @@ static BerTag tagNames;
 
 void BerObject::AsInt(int depth)
 {
+    int64_t res = AsInt();
+
+    printf("%*sAS INTEGER: %lld\n", depth, "", res);
+}
+
+int64_t BerObject::AsInt(void)
+{
     int64_t res = 0;
     int i;
 
@@ -21,24 +28,14 @@ void BerObject::AsInt(int depth)
 
     res = res >> (8 - i) * 8;
 
-    printf("%*sAS INTEGER: %lld\n", depth, "", res);
+    return res;
 }
 
 void BerObject::AsOid(int depth)
 {
     std::vector<uint64_t> oidData;
-    std::size_t currentOctet = 0;
-    uint8_t x, y;
 
-    x = objData[0] / 40;
-    y = objData[0] % 40;
-
-    oidData.push_back(x);
-    oidData.push_back(y);
-
-    while(currentOctet < objData.size() - 1){
-        oidData.push_back(DecodeVLQ(currentOctet, objData));
-    }
+    AsOid(oidData);
 
     printf("%*sAS OID: ", depth, "");
 
@@ -48,14 +45,37 @@ void BerObject::AsOid(int depth)
     printf("\n");
 }
 
+void BerObject::AsOid(std::vector<uint64_t> &oid)
+{
+    std::size_t currentOctet = 0;
+    uint8_t x, y;
+
+    x = objData[0] / 40;
+    y = objData[0] % 40;
+
+    oid.push_back(x);
+    oid.push_back(y);
+
+    while(currentOctet < objData.size() - 1){
+        oid.push_back(DecodeVLQ(currentOctet, objData));
+    }
+}
+
 void BerObject::AsStr(int depth)
 {
-    printf("%*sAS STR: ", depth, "");
+    std::string str;
+
+    AsStr(str);
+
+    printf("%*sAS STR: %s\n", depth, "", str.c_str());
+}
+
+void BerObject::AsStr(std::string &str)
+{
+    str.reserve(objData.size());
 
     for(auto &val : objData)
-        printf("%c", isalnum(val) ? (char)val : '.');
-
-    printf("\n");
+        str += isalnum(val) ? (char)val : '.';
 }
 
 uint64_t BerObject::DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData)

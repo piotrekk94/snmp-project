@@ -1,5 +1,21 @@
 #include <dekoBER.hpp>
 #include <koBER.hpp>
+#include <algorithm>
+#include <iostream>
+#include <PDU.hpp>
+#include <string>
+
+static void str2hex(std::string &str, std::vector<uint8_t> &hex)
+{
+    str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
+
+    for(int i = 0; i < str.length(); i += 2){
+        std::string tmp;
+        tmp += str[i];
+        tmp += str[i + 1];
+        hex.push_back(std::stoi(tmp, nullptr, 16));
+    }
+}
 
 void test_dekober(void)
 {
@@ -89,4 +105,30 @@ void test_kober(void)
     printf("*=+-\nFINAL FORM\n-+=*\n");
 
     DekoBER finalForm(encSeq2.GetBerData());
+}
+
+void test_pdu(void)
+{
+    MibObject mibNul(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::NUL);
+    MibObject mibOid(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::OID);
+    mibOid.setOidData({1, 3, 350, 212, 357});
+    MibObject mibSeq(PDUEnum::UNI, PDUEnum::CON, PDUEnum::SEQ);
+    mibSeq.AddChild(&mibOid);
+    mibSeq.AddChild(&mibNul);
+
+    std::vector<MibObject*> varBindList {&mibSeq};
+
+    PDU enc(GetRequest, 1977690072LLU, 0LLU, 0LLU, varBindList);
+
+    for(;;){
+        std::string str;
+        std::vector<uint8_t> hex;
+
+        printf("Paste packet in hex to decode:\n");
+        std::getline(std::cin, str);
+
+        str2hex(str, hex);
+
+        PDU pdu(hex);
+    }
 }

@@ -11,16 +11,24 @@ private:
     Type *objMIBType;
     uint64_t objLen;
     std::vector<uint8_t> objData;
+    uint64_t DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData);
+public:
     std::vector<BerObject*> children;
+    int64_t AsInt(void);
     void AsInt(int depth);
     void AsOid(int depth);
     void AsStr(int depth);
-    uint64_t DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData);
-public:
+    void AsOid(std::vector<uint64_t> &oid);
+    void AsStr(std::string &str);
     void Display(int depth);
+    uint8_t GetClass(void){return objClass;};
+    uint8_t GetType(void){return objType;};
+    uint64_t GetTag(void){return objTag;};
+    std::vector<uint8_t> &GetData(void){return objData;};
     BerObject(uint8_t objClass, uint8_t objType, uint64_t objTag, Type *objMIBType, uint64_t objLen, std::vector<uint8_t> &objData) {
         this->objClass = objClass; this->objType = objType; this->objTag = objTag; this->objMIBType = objMIBType; this->objLen = objLen; this->objData.assign(objData.begin(), objData.end());
     };
+    ~BerObject(void){for(auto &val : children) delete val;};
     void AddChild(BerObject *child) {this->children.push_back(child);}
 };
 
@@ -55,4 +63,5 @@ private:
     void Display(BerObject *obj);
 public:
     DekoBER(std::vector<uint8_t> &encodedData);
+    BerObject *GetBerTree(void) {return root;};
 };
