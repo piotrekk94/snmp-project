@@ -163,12 +163,16 @@ void DekoBER::Display(BerObject *obj)
 
 DekoBER::DekoBER(std::vector<uint8_t> &encodedData)
 {
+/*
     printf("==*START*==\n");
     printf("Decoding binary data:");
     Display(encodedData);
+*/
     Decode(encodedData, nullptr);
+/*
     printf("\nDecoded object structure:\n");
     Display(root);
+*/
 }
 
 uint64_t DekoBER::DecodeVLQ(std::size_t &currentOctet, std::vector<uint8_t> &encodedData)

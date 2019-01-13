@@ -47,6 +47,8 @@ void PDU::Encode(std::vector<MibObject*> &varBindList)
     for(auto &val : encodedPkt)
         printf("%02x ", val);
 
+    printf("\n");
+
 }
 
 void PDU::Decode(void)
@@ -68,11 +70,6 @@ void PDU::Decode(void)
     printf("ERR STA: %llu\n", errorStatus);
     printf("ERR IDX: %llu\n", errorIndex);
     printf("VAR BIND:\n");
-    /*
-    if(varBind != nullptr){
-        varBind->Display(0);
-    }
-    */
 
     int i = 1;
     for(auto &val : varBind->children){
