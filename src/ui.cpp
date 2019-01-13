@@ -109,6 +109,8 @@ void test_kober(void)
 
 void test_pdu(void)
 {
+    int resp = 0;
+
     MibObject mibNul(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::NUL);
     MibObject mibOid(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::OID);
     mibOid.setOidData({1, 3, 350, 212, 357});
@@ -130,5 +132,43 @@ void test_pdu(void)
         str2hex(str, hex);
 
         PDU pdu(hex);
+
+        if(pdu.pktType == GetRequest){
+            printf("PDU RESPONSE GET:\n");
+
+            MibObject mibIntR(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::INT);
+            mibIntR.setIntData(resp++);
+            MibObject mibOidR(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::OID);
+            std::vector<uint64_t> oid;
+            pdu.varBind->children[0]->children[0]->AsOid(oid);
+            mibOidR.setOidData(oid);
+            MibObject mibSeqR(PDUEnum::UNI, PDUEnum::CON, PDUEnum::SEQ);
+            mibSeqR.AddChild(&mibOidR);
+            mibSeqR.AddChild(&mibIntR);
+
+            std::vector<MibObject*> varBindListResp {&mibSeqR};
+
+            PDU enc(GetResponse, pdu.requestID, 0LLU, 0LLU, varBindListResp);
+        }
+
+        if(pdu.pktType == SetRequest){
+            printf("PDU RESPONSE SET:\n");
+
+            resp = pdu.varBind->children[0]->children[1]->AsInt();
+
+            MibObject mibIntR(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::INT);
+            mibIntR.setIntData(resp);
+            MibObject mibOidR(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::OID);
+            std::vector<uint64_t> oid;
+            pdu.varBind->children[0]->children[0]->AsOid(oid);
+            mibOidR.setOidData(oid);
+            MibObject mibSeqR(PDUEnum::UNI, PDUEnum::CON, PDUEnum::SEQ);
+            mibSeqR.AddChild(&mibOidR);
+            mibSeqR.AddChild(&mibIntR);
+
+            std::vector<MibObject*> varBindListResp {&mibSeqR};
+
+            PDU enc(GetResponse, pdu.requestID, 0LLU, 0LLU, varBindListResp);
+        }
     }
 }

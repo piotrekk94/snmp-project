@@ -1,5 +1,6 @@
 #include "PDU.hpp"
 #include <cstdio>
+#include "tree.hpp"
 
 void PDU::Encode(std::vector<MibObject*> &varBindList)
 {
@@ -59,7 +60,7 @@ void PDU::Decode(void)
     errorStatus = root->children[2]->children[1]->AsInt();
     errorIndex = root->children[2]->children[2]->AsInt();
 
-    auto varBind = root->children[2]->children[3];
+    varBind = root->children[2]->children[3];
 
     printf("PDU DECODE\n");
     printf("PKT TYPE: %d\n", pktType);

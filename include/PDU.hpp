@@ -34,7 +34,7 @@ namespace PDUEnum {
 }
 
 class PDU {
-private:
+public:
     std::vector<uint8_t> encodedPkt;
 
     PDUType pktType;
@@ -43,10 +43,11 @@ private:
     uint64_t errorIndex;
 
     BerObject *root;
+    BerObject *varBind;
 
     void Encode(std::vector<MibObject*> &varBindList);
     void Decode(void);
-public:
+
     PDU(std::vector<uint8_t> &packet) {this->encodedPkt.assign(packet.begin(), packet.end());Decode();};
     PDU(PDUType pktType, uint64_t requestID, uint64_t errorStatus, uint64_t errorIndex, std::vector<MibObject*> &varBindList)
         : pktType(pktType)
@@ -54,4 +55,5 @@ public:
         , errorStatus(errorStatus)
         , errorIndex(errorIndex)
         {Encode(varBindList);Decode();};
+    BerObject *GetVarBind(void){return varBind;};
 };
