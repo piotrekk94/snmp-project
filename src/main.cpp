@@ -61,10 +61,11 @@ void handlePDU(PDU &pdu, UDP &udp, struct sockaddr_in &sa)
 	auto object = tree->getObject(path);
 	if(object){
 		auto typeName = object->getTypeName();
+		auto name = object->getName();
 
-		printf("%s\n", typeName.c_str());
+		printf("%s:%s\n", name.c_str(), typeName.c_str());
 
-		if(!typeName.compare("TimeTicks")){
+		if(!name.compare("sysUpTime")){
 			int cls = -1;
 			int tag = -1;
 			std::vector<unsigned int> con;
