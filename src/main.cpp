@@ -12,6 +12,18 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <tuple>
+#include <unistd.h>
+#include <sys/stat.h> 
+#include <fcntl.h>
+#include <signal.h>
+
+int64_t resp;
+volatile bool runSNMP = true;
+
+void intHandler(int dummy)
+{
+	runSNMP = false;
+}
 
 void types_init(void){
 	std::vector<seq_type> seq;
@@ -29,9 +41,6 @@ void types_init(void){
 
 void handlePDU(PDU &pdu, UDP &udp, struct sockaddr_in &sa)
 {
-	static int64_t resp = 2137;
-
-
 	MibObject *mibRespValue;
 	MibObject mibOidR(PDUEnum::UNI, PDUEnum::PRM, PDUEnum::OID);
 	MibObject mibSeqR(PDUEnum::UNI, PDUEnum::CON, PDUEnum::SEQ);
@@ -112,6 +121,8 @@ void handlePDU(PDU &pdu, UDP &udp, struct sockaddr_in &sa)
 
 int main(int argc, char* argv[]){
 
+	int fd;
+	struct stat st;
 	Object iso("iso");
 	tree = new ObjectTree(&iso);
 
@@ -123,7 +134,19 @@ int main(int argc, char* argv[]){
 
 	UDP udp;
 
-	for(;;){
+	stat("snmp.dat", &st);
+
+	fd = open("snmp.dat", O_CREAT | O_RDWR);
+
+	if(st.st_size == sizeof(resp)){
+		read(fd, &resp, sizeof(resp));	
+	}else{
+		printf("No snmp sysUpTime value saved\n");
+	}
+
+	signal(SIGINT, intHandler);
+
+	while(runSNMP){
 		struct sockaddr_in sa;
 		uint8_t buf[1024];
 		int ret = udp.Read(buf, sizeof(buf), &sa);
@@ -139,6 +162,11 @@ int main(int argc, char* argv[]){
 
 		handlePDU(pdu, udp, sa);
 	}
+
+	lseek(fd, 0, SEEK_SET);
+	write(fd, &resp, sizeof(resp));
+
+	close(fd);
 
 	return 0;
 }
